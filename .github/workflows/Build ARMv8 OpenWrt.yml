@@ -168,6 +168,8 @@ jobs:
         tag: ARMv8 OpenWrt-21.02
         commit: main
         token: ${{ secrets.RELEASES_TOKEN }}
+        body: |
+          ${{ env.useVersionInfo }}
         artifacts: /opt/openwrt/tmp/*.img.bz2    
 
     - name: Delete workflow runs
