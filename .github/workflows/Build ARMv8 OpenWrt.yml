@@ -158,19 +158,30 @@ jobs:
         cd /opt/openwrt/tmp
         sudo bzip2 *.img
         echo "::set-output name=status::success"
-    - name: Create release
-      uses: ncipollo/release-action@v1
-      if: env.UPLOAD_RELEASE == 'true' && steps.build.outputs.status == 'success' && !cancelled()
+    
+    - name: Generate tag
+      id: tag
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      run: |
+        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H")"
+        echo "🚀 Armv8" >> release.txt
+        echo "🔗 [Cowtransfer](${{ env.COWTRANSFER_URL }})" >> release.txt
+        echo "🔗 [WeTransfer](${{ env.WETRANSFER_URL }})" >> release.txt
+        echo "::set-output name=status::success"
+    
+    - name: Upload firmware to release
+      uses: softprops/action-gh-release@v1
+      if: steps.tag.outputs.status == 'success' && !cancelled()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        allowUpdates: true
-        omitBodyDuringUpdate: true
-        omitNameDuringUpdate: true
-        tag: ARMv8 OpenWrt-21.02
-        commit: main
-        token: ${{ secrets.RELEASES_TOKEN }}
-        body: |
+        name: ${{ env.DATE }} 🚀 Armv8 | 自动编译打包
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        body: | 
+          Armv8 🚀 自动编译打包
           ${{ env.useVersionInfo }}
-        artifacts: /opt/openwrt/tmp/*.img.bz2    
+        body_path: release.txt
+        files: ${{ env.FIRMWARE }}/*    
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
